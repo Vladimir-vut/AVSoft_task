@@ -4,3 +4,4 @@ venv/*
 file_links.txt
 tree.txt
 *.log
+*.png

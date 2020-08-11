@@ -22,6 +22,10 @@ def main():
     link_parser = Link_Parser(base_url)
     link_parser.get_links()  # Получение ссылок на странице
 
+    log.info('LINKS ON START PAGE:')
+    for link in link_parser.link_list:
+        log.info(f'{link}')
+
     def run(url):
 
         log.info(f'RUN URL: {url}')
@@ -69,6 +73,7 @@ def main():
     log.info(f'TIME WORKING OF TASKS - {datetime.now()-start}')  # Записывает общее время работы парсера
 
     link_parser.link_list.sort()
+    print('MAKE')
     link_parser.make_file_link()
 
     tree = My_Tree()  # Объект для генерации дерева
