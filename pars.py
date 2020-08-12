@@ -2,7 +2,7 @@ from logger import log
 from urllib.request import urlopen
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
-import re
+
 
 
 class Link_Parser:
@@ -24,43 +24,40 @@ class Link_Parser:
                             'youtube', 'facebook', 'instagram', 'tel', 'skype']
 
     def get_links(self):
-        log.info('Connection to {}'.format(self.url))
+        log.info(f'START UPLOAD - {self.url}')
         try:
             target_page = urlopen(self.url)
             hostname = urlparse(self.url).hostname
             soup = BeautifulSoup(target_page, 'html.parser', from_encoding="iso-8859-1")
             links = soup.find_all('a')  # Ищет ссылки
             link_list = [l.get('href') for l in links if l.get('href') != '/']  # выделяет ссылки
+            print(link_list)
         except Exception as e:
-            log.error('ERROR: {} URL: {}'. format(e, self.url))
+            log.error(e)
             if UnboundLocalError:
                 raise SystemExit(1)
 
         for link in link_list:
-            if len(link) > 0:
-                log.info('link - {}'.format(link))  # TODO Декодировать названия линков
-                for social_net in self.social_nets:  # Пропускает ссылки с соцсетями
+            if link:
+                for social_net in self.social_nets:
                     if social_net in link:
+                        link = '_'
                         continue
 
-                if '?' in link:  # Убирает аргументы в ссылках
+                if '?' in link:
                     link = link[:link.find('?')]
 
-                if hostname in link:  # Отделяет домен
+                if hostname in link:
                     link = link.split(hostname)
                     link = link[-1]
 
-                if len(link) < 1:
-                    continue
+                if link.startswith('http') and hostname not in link:
+                    link = '_'
 
-                if link.startswith('http') and hostname not in link:  # Пропускает внешние ссылки
-                    continue
-
-                if link[0] != '/':
-                    link = '/' + link
-
-                if link not in self.link_list:  # Добавляет ссылку в общий список если она уникальна
+                if link != '_' and link not in self.link_list:
+                    print(link)
                     self.link_list.append(link)
+        print(self.link_list)
 
     def make_file_link(self):  # запись в файл
         with open(self.file_links, 'w', encoding='utf-8') as f:
