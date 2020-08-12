@@ -2,7 +2,7 @@ from logger import log
 from urllib.request import urlopen
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
-import re
+import requests
 
 
 class Link_Parser:
@@ -21,46 +21,59 @@ class Link_Parser:
         self.link_list = []
         self.file_links = 'file_links.txt'
         self.social_nets = ['#', 'vk', 'ok', 'odnoklassniki', 'twitter',
-                            'youtube', 'facebook', 'instagram', 'tel', 'skype']
+                            'youtube', 'facebook', 'instagram', 'tel:', 'skype', 'mailto:']
 
     def get_links(self):
+        link_list = []
         log.info('Connection to {}'.format(self.url))
         try:
             target_page = urlopen(self.url)
-            hostname = urlparse(self.url).hostname
-            soup = BeautifulSoup(target_page, 'html.parser', from_encoding="iso-8859-1")
-            links = soup.find_all('a')  # Ищет ссылки
-            link_list = [l.get('href') for l in links if l.get('href') != '/']  # выделяет ссылки
+            print(target_page)  # TODO Убрать принт
         except Exception as e:
-            log.error('ERROR: {} URL: {}'. format(e, self.url))
-            if UnboundLocalError:
-                raise SystemExit(1)
+            log.error('ERROR: {} URL: {}'.format(e, self.url))
+            return
+        hostname = urlparse(self.url).hostname
+        soup = BeautifulSoup(target_page, 'html.parser')
+        links = soup.find_all('a')  # Ищет ссылки
+        for l in links:
+            if l.get('href') and l.get('href') != '/':
+                link_list.append(str(l.get('href').encode("utf-8"))[2:-1])  # TODO Подумать нужна ли вообще кодировка
+
 
         for link in link_list:
-            if len(link) > 0:
-                log.info('link - {}'.format(link))  # TODO Декодировать названия линков
-                for social_net in self.social_nets:  # Пропускает ссылки с соцсетями
-                    if social_net in link:
+            if link:  # TODO Упростить всё это
+                if len(link) > 0:
+                    for social_net in self.social_nets:  # Пропускает ссылки с соцсетями
+                        if social_net in link:
+                            link = ''
+                            continue
+                    if '?' in link:  # Убирает аргументы в ссылках
+                        link = link[:link.find('?')]
+
+                    if hostname in link:  # Отделяет домен
+                        link = link.split(hostname)
+                        link = link[-1]
+
+                    if len(link) < 1:
                         continue
 
-                if '?' in link:  # Убирает аргументы в ссылках
-                    link = link[:link.find('?')]
+                    if link.startswith('http') and hostname not in link:  # Пропускает внешние ссылки
+                        continue
 
-                if hostname in link:  # Отделяет домен
-                    link = link.split(hostname)
-                    link = link[-1]
+                    if link[0] != '/':
+                        link = '/' + link
 
-                if len(link) < 1:
-                    continue
+                    try:
+                        if 'text/html' not in urlopen(self.url+link).info()['Content-Type']:
+                            link = ''
+                            continue
+                    except Exception as e:
+                        log.error('ERROR: {} URL: {}'.format(e, self.url+link))
+                        link = ''
 
-                if link.startswith('http') and hostname not in link:  # Пропускает внешние ссылки
-                    continue
-
-                if link[0] != '/':
-                    link = '/' + link
-
-                if link not in self.link_list:  # Добавляет ссылку в общий список если она уникальна
-                    self.link_list.append(link)
+                    if link not in self.link_list:  # Добавляет ссылку в общий список если она уникальна
+                        log.info('add link to general list - {}'.format(link))
+                        self.link_list.append(link)
 
     def make_file_link(self):  # запись в файл
         with open(self.file_links, 'w', encoding='utf-8') as f:

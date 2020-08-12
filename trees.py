@@ -38,23 +38,26 @@ class My_Tree:
     def make_tree(self, file_links):
         log.info('START GENERATE TREE')
         split_links = self.read_links(file_links)
-        for selection_ln in split_links:
-            if selection_ln:
+        try:
+            for selection_ln in split_links:
+                if selection_ln:
 
-                if selection_ln[0] not in self.tree:
+                    if selection_ln[0] not in self.tree:
 
-                    self.tree.add_child(name=selection_ln[0])
+                        self.tree.add_child(name=selection_ln[0])
 
-                    if len(selection_ln) > 1:
+                        if len(selection_ln) > 1:
+
+                            self.node_build(selection_ln)
+
+                    elif selection_ln[0] in self.tree and len(selection_ln) > 0:
 
                         self.node_build(selection_ln)
 
-                elif selection_ln[0] in self.tree and len(selection_ln) > 0:
-
-                    self.node_build(selection_ln)
-
-            else:
-                continue
+                else:
+                    continue
+        except Exception as e:
+            log.error('ERROR: {}'.format(e))
 
     def node_build(self, link):
         for ln in link[1:]:

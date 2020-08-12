@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from trees import My_Tree
 from datetime import datetime
 import sys
+import requests
 
 
 def main():
@@ -29,24 +30,22 @@ def main():
     def run(url):
 
         log.info(f'RUN URL: {url}')
-        try:
-            # Создается объект для получения ссылок с уже полученных страниц ранее
-            th_parser = Link_Parser(url)
-            th_parser.get_links()
 
-            '''link_parser.link_list основной список ссылок'''
-            for link in th_parser.link_list:
-                if link:
-                    if link not in link_parser.link_list:
-                        link_parser.link_list.append(link)
-                        log.info(f'ADD LINK - {link}')
-        except Exception as e:
-            log.error(e)
+        th_parser = Link_Parser(url)  # Создается объект для получения ссылок с уже полученных страниц ранее
+        th_parser.get_links()
+
+        for link in th_parser.link_list:
+            if link:
+                if link not in link_parser.link_list:  # link_parser.link_list основной список ссылок
+                    link_parser.link_list.append(link)
+                    log.info(f'ADD LINK - {link}')
 
     used_links = []  # Сюда будут сохраняться ссылки парсинг по которым уже был
     start = datetime.now()
     while True:
         workers = len(link_parser.link_list) - len(used_links) # Определение оптимального числа потоков
+        if workers <= 0:  # TODO Разобраться почему воркеров бывает 0
+            break
         try:
             with ThreadPoolExecutor(max_workers=workers) as executor:
                 future_list = []
@@ -61,13 +60,13 @@ def main():
                 for future_pool in as_completed(future_list):
                     future_pool.result()  # Дожидаемся выполнения задач, получаем результат,
                                           # в данном случае все результаты будут None, т.к. run ничего не возвращает
-            if len(used_links) == len(link_parser.link_list):  # Прекращаем парсинг когда все ссылки пропарсены
-                break
+
         except Exception as e:
             log.error(e)
             if e == ValueError:
                 '''Если количество процессов (max_workers) <= 0 выходим из скрипта,
                 т.е. на странице нет ни одной внутренней ссылки'''
+                print(exit)
                 raise SystemExit(1)
 
     log.info(f'TIME WORKING OF TASKS - {datetime.now()-start}')  # Записывает общее время работы парсера
