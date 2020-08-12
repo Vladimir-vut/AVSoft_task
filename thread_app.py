@@ -4,7 +4,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from trees import My_Tree
 from datetime import datetime
 import sys
-import requests
 
 
 def main():
@@ -38,11 +37,12 @@ def main():
             if link:
                 if link not in link_parser.link_list:  # link_parser.link_list основной список ссылок
                     link_parser.link_list.append(link)
-                    log.info(f'ADD LINK - {link}')
+                    log.info('add link to general list - {}'.format(link))
 
     used_links = []  # Сюда будут сохраняться ссылки парсинг по которым уже был
     start = datetime.now()
     while True:
+        # print(i)
         workers = len(link_parser.link_list) - len(used_links) # Определение оптимального числа потоков
         if workers <= 0:  # TODO Разобраться почему воркеров бывает 0
             break

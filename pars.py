@@ -2,7 +2,6 @@ from logger import log
 from urllib.request import urlopen
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
-import requests
 
 
 class Link_Parser:
@@ -28,7 +27,7 @@ class Link_Parser:
         log.info('Connection to {}'.format(self.url))
         try:
             target_page = urlopen(self.url)
-            print(target_page)  # TODO Убрать принт
+            # print(target_page)  # TODO Убрать принт
         except Exception as e:
             log.error('ERROR: {} URL: {}'.format(e, self.url))
             return
@@ -60,25 +59,33 @@ class Link_Parser:
                     if link.startswith('http') and hostname not in link:  # Пропускает внешние ссылки
                         continue
 
-                    if link[0] != '/':
-                        link = '/' + link
+                    link = link.split('/')
+                    if link[0] == '':
+                        link.pop(0)
+                    elif link[-1] == '':
+                        link.pop(-1)
+
+                    if len(link) > 3:
+                        link = link[:3]
+                    link = '/' + '/'.join(link)
 
                     try:
-                        if 'text/html' not in urlopen(self.url+link).info()['Content-Type']:
+                        print('https://avsw.ru', ' ----- ', link)
+                        if 'text/html' not in urlopen('https://avsw.ru'+link).info()['Content-Type']:  # TODO заменить на переменную URL
                             link = ''
                             continue
                     except Exception as e:
-                        log.error('ERROR: {} URL: {}'.format(e, self.url+link))
+                        log.error('ERROR: {} URL: {}'.format(e, 'https://avsw.ru'+link))  # TODO заменить на переменную URL
                         link = ''
 
-                    if link not in self.link_list:  # Добавляет ссылку в общий список если она уникальна
-                        log.info('add link to general list - {}'.format(link))
+                    if link not in self.link_list and link != '/':  # Добавляет ссылку в общий список если она уникальна
                         self.link_list.append(link)
 
     def make_file_link(self):  # запись в файл
         with open(self.file_links, 'w', encoding='utf-8') as f:
             for link in self.link_list:
-                f.write(link+'\n')
+                if len(link):
+                    f.write(link+'\n')
 
 
 

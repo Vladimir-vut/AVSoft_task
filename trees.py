@@ -72,7 +72,7 @@ class My_Tree:
         style.show_branch_length = True
         style.show_branch_support = True
         self.tree.show(tree_style=style)
-        self.tree.render('tree.png', w=183, units="mm", tree_style=style)
+        self.tree.render('1_tree.png', w=183, units="mm", tree_style=style)
 
 
 
