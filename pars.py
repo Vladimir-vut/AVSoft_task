@@ -2,6 +2,8 @@ from logger import log
 from urllib.request import urlopen
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
+from urllib.parse  import quote
+
 
 
 class Link_Parser:
@@ -15,9 +17,11 @@ class Link_Parser:
     5. По итогу записывает ссылки из из ощего списка в файл
     '''
 
-    def __init__(self, url):
+    def __init__(self, url, timeout, deep):
         self.url = url
+        self.deep = deep
         self.link_list = []
+        self.timeout = timeout
         self.file_links = 'file_links.txt'
         self.social_nets = ['#', 'vk', 'ok', 'odnoklassniki', 'twitter',
                             'youtube', 'facebook', 'instagram', 'tel:', 'skype', 'mailto:']
@@ -26,8 +30,7 @@ class Link_Parser:
         link_list = []
         log.info('Connection to {}'.format(self.url))
         try:
-            target_page = urlopen(self.url)
-            # print(target_page)  # TODO Убрать принт
+            target_page = urlopen(self.url, timeout=self.timeout)
         except Exception as e:
             log.error('ERROR: {} URL: {}'.format(e, self.url))
             return
@@ -36,8 +39,8 @@ class Link_Parser:
         links = soup.find_all('a')  # Ищет ссылки
         for l in links:
             if l.get('href') and l.get('href') != '/':
-                link_list.append(str(l.get('href').encode("utf-8"))[2:-1])  # TODO Подумать нужна ли вообще кодировка
-
+                link_list.append(l.get('href'))
+                # link_list.append(quote(l.get('href')))
 
         for link in link_list:
             if link:  # TODO Упростить всё это
@@ -65,21 +68,16 @@ class Link_Parser:
                     elif link[-1] == '':
                         link.pop(-1)
 
-                    if len(link) > 3:
-                        link = link[:3]
+                    if len(link) > self.deep:
+                        link = link[:self.deep]
                     link = '/' + '/'.join(link)
 
-                    try:
-                        print('https://avsw.ru', ' ----- ', link)
-                        if 'text/html' not in urlopen('https://avsw.ru'+link).info()['Content-Type']:  # TODO заменить на переменную URL
-                            link = ''
-                            continue
-                    except Exception as e:
-                        log.error('ERROR: {} URL: {}'.format(e, 'https://avsw.ru'+link))  # TODO заменить на переменную URL
-                        link = ''
+                    if link in self.link_list:
+                        continue
 
-                    if link not in self.link_list and link != '/':  # Добавляет ссылку в общий список если она уникальна
-                        self.link_list.append(link)
+                    if link != '/':
+
+                        self.link_list.append(str(link.encode("utf-8"))[2:-1])
 
     def make_file_link(self):  # запись в файл
         with open(self.file_links, 'w', encoding='utf-8') as f:

@@ -3,23 +3,18 @@ from pars import Link_Parser
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from trees import My_Tree
 from datetime import datetime
-import sys
+from urllib.request import urlopen
+import argparse
 
 
-def main():
+def main(base_url, tm, deep):
     # Объект log используется для записи логов
     log.info('START SESSION')
 
     '''Чтение параметра из консоли, если параметр не задан 
     используется значение по умолчанию'''
-    base_url = sys.argv
-    if len(base_url) == 2:
-        base_url = sys.argv[1]
-    else:
-        base_url = 'https://www.guidedogs.com'
 
-    # Создание объекта для парсинга главной страницы
-    link_parser = Link_Parser(base_url)
+    link_parser = Link_Parser(base_url, tm, deep)  # Создание объекта для парсинга главной страницы
     link_parser.get_links()  # Получение ссылок на странице
 
     log.info('LINKS ON START PAGE:')
@@ -30,12 +25,20 @@ def main():
 
         log.info(f'RUN URL: {url}')
 
-        th_parser = Link_Parser(url)  # Создается объект для получения ссылок с уже полученных страниц ранее
+        th_parser = Link_Parser(url, tm, deep)  # Создается объект для получения ссылок с уже полученных страниц ранее
         th_parser.get_links()
 
         for link in th_parser.link_list:
             if link:
-                if link not in link_parser.link_list:  # link_parser.link_list основной список ссылок
+                if link not in link_parser.link_list: # link_parser.link_list основной список ссылок
+                    try:
+                        # print(' ----- ', link)
+                        if 'text/html' not in urlopen(base_url+link, timeout=tm).info()['Content-Type']:
+                            continue
+                    except Exception as e:
+                        log.error('ERROR: {} URL: {}'.format(e, base_url+link))
+                        continue
+
                     link_parser.link_list.append(link)
                     log.info('add link to general list - {}'.format(link))
 
@@ -83,5 +86,13 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    arguments = argparse.ArgumentParser(description='Arguments of the parser')
+    arguments.add_argument('-u', type=str, default='https://www.guidedogs.com',
+                           help='URL for parsing. Default URL == https://www.guidedogs.com')
+    arguments.add_argument('-tm', type=int, default=1, help='Timeout (sec) to connection server')
+    arguments.add_argument('-d', type=int, default=3, help='Depth of parsing, default == 0 (full parsing)')
+    argument = arguments.parse_args()
+
+    print(argument)
+    main(argument.u, argument.tm, argument.d)
 
