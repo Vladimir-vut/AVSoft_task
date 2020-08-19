@@ -22,6 +22,11 @@ class My_Tree:
         return self.tree.get_ascii(show_internal=True)  # Подписываеи ветки
 
     def read_links(self, file_links):
+        '''
+        Метод-генератор сылок из файла полученного при парсинге
+        :param file_links: Файл со ссылками полученный при парсинге
+        :yield: ССылка (list)
+        '''
         with open(file_links, 'r') as f:
             try:
                 links = f.read().splitlines()
@@ -36,6 +41,11 @@ class My_Tree:
                 log.error(e)
 
     def make_tree(self, file_links):
+        '''
+        Метод для формирования графа
+        :param file_links: Файл со ссылками полученный при парсинге
+        :return: None
+        '''
         log.info('START GENERATE TREE')
         split_links = self.read_links(file_links)
         try:
@@ -50,7 +60,7 @@ class My_Tree:
 
                             self.node_build(selection_ln)
 
-                    elif selection_ln[0] in self.tree and len(selection_ln) > 0:
+                    elif selection_ln[0] in self.tree and len(selection_ln) > 1:
 
                         self.node_build(selection_ln)
 
@@ -66,13 +76,13 @@ class My_Tree:
                 node = self.tree&link[val_child]
                 node.add_child(name=ln)
 
-    def draw_tree(self):
+    def draw_tree(self):  # Визуализация дерева в GUI, и сохранение в png файл
         style = TreeStyle()
         style.show_leaf_name = True
         style.show_branch_length = True
         style.show_branch_support = True
         self.tree.show(tree_style=style)
-        self.tree.render('1_tree.png', w=183, units="mm", tree_style=style)
+        self.tree.render('tree.png', w=183, units="mm", tree_style=style)
 
 
 
