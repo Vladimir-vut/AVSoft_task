@@ -16,7 +16,7 @@
 - beautifulsoup 4
 
 #### Установка и запуск
-1. git clone https://github.com/Vladimir-vut/AVSoft_task
+1. git clone https://github.com/Vladimir-vut/site_parser
 2. cd AVSoft_task
 3. python -m venv environment name
    3.  Для Linux: source environment name/bin/activate
